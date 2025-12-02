@@ -1,13 +1,18 @@
-{% set name = "sam3" %}
-{% set git_hash = "84cc43bca4347b772f17d1078a1ddb4c054655c2" %}
-{% set version = "0.1.0" %}
+schema_version: 1
+
+context:
+  name: "sam3"
+  git_hash: "84cc43bca4347b772f17d1078a1ddb4c054655c2"
+  version: "0.1.0"
+  python_min: "3.9"
+
 
 package:
-  name: {{ name|lower }}
-  version: {{ version }}
+  name: ${{ name|lower }}
+  version: ${{ version }}
 
 source:
-  url: https://github.com/facebookresearch/sam3/archive/{{ git_hash }}.tar.gz
+  url: https://github.com/facebookresearch/sam3/archive/${{ git_hash }}.tar.gz
   sha256: b50d5f85bc57f13ef8c1b7fe485688bc0f76f58d18078ce9b505acb3bcfa408b
   patches:
     # https://github.com/facebookresearch/sam3/pull/167
@@ -28,18 +33,18 @@ source:
     - loosen_dependencies.patch
 
 build:
+  number: 1
   noarch: python
   script: python -m pip install . -vv
-  number: 0
 
 requirements:
   host:
-    - python {{ python_min }}
+    - python ${{ python_min }}.*
     - setuptools
     - wheel
     - pip
   run:
-    - python >={{ python_min }}
+    - python >=${{ python_min }}
     - timm >=1.0.17
     - numpy >=1.26
     - tqdm
@@ -56,25 +61,25 @@ requirements:
     - psutil
     - av
 
-test:
-  imports:
-    - sam3
-  commands:
-    - pip check
-  requires:
-    - pip
-    - python {{ python_min }}
+tests:
+  - python:
+      imports:
+        - sam3
+      pip_check: true
+      python_version: ${{ python_min }}.*
 
 about:
-  home: https://github.com/facebookresearch/sam3
-  summary: 'SAM 3: Segment Anything with Concepts'
+  summary: "SAM 3: Segment Anything with Concepts"
   description: |
     SAM 3 is a unified foundation model for promptable segmentation in images and videos.
     It can detect, segment, and track objects using text or visual prompts such as points,
     boxes, and masks.
-  license: SAM
-  license_family: OTHER
+  license: LicenseRef-SAM
   license_file: LICENSE
+  homepage: https://github.com/facebookresearch/sam3
+  repository: https://github.com/facebookresearch/sam3
+  documentation: https://ai.meta.com/sam3/
+
 
 extra:
   recipe-maintainers:
