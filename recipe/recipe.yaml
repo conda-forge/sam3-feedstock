@@ -4,7 +4,7 @@ context:
   name: "sam3"
   git_hash: "84cc43bca4347b772f17d1078a1ddb4c054655c2"
   version: "0.1.0"
-  python_min: "3.9"
+  python_min: "3.10"
 
 
 package:
@@ -17,6 +17,8 @@ source:
   patches:
     # https://github.com/facebookresearch/sam3/pull/167
     - 167-update_setuptools_to_find_all_subpackages.patch
+    # https://github.com/facebookresearch/sam3/pull/282
+    - 282-fix_missing_bpe_vocabulary_asset.patch
     # https://github.com/facebookresearch/sam3/pull/196
     # - 196-lazy_import_decord.patch
     # Decord is simply unmaintained and the codepath doesn't really use
@@ -35,7 +37,12 @@ source:
 build:
   number: 1
   noarch: python
-  script: python -m pip install . -vv
+  # Copy BPE vocab asset into sam3 package before pip install
+  # since assets/ is at repo root but code expects it inside the package
+  script:
+    - mkdir -p sam3/assets
+    - cp assets/bpe_simple_vocab_16e6.txt.gz sam3/assets/
+    - python -m pip install . -vv
 
 requirements:
   host:
@@ -67,6 +74,9 @@ tests:
         - sam3
       pip_check: true
       python_version: ${{ python_min }}.*
+  - script:
+      # Verify the BPE vocabulary asset is included in the package
+      - test -f $PREFIX/lib/python*/site-packages/sam3/assets/bpe_simple_vocab_16e6.txt.gz
 
 about:
   summary: "SAM 3: Segment Anything with Concepts"
