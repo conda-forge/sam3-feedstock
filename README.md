@@ -5,14 +5,17 @@ Feedstock license: [BSD-3-Clause](https://github.com/conda-forge/sam3-feedstock/
 
 Home: https://github.com/facebookresearch/sam3
 
-Package license: SAM
+Package license: LicenseRef-SAM
 
 Summary: SAM 3: Segment Anything with Concepts
+
+Development: https://github.com/facebookresearch/sam3
+
+Documentation: https://ai.meta.com/sam3/
 
 SAM 3 is a unified foundation model for promptable segmentation in images and videos.
 It can detect, segment, and track objects using text or visual prompts such as points,
 boxes, and masks.
-
 
 Current build status
 ====================
