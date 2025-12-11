@@ -2,8 +2,13 @@ schema_version: 1
 
 context:
   name: "sam3"
-  git_hash: "84cc43bca4347b772f17d1078a1ddb4c054655c2"
-  version: "0.1.0"
+  # sam3 claims version 0.1.0 but they don't really release anything on pypi
+  # so we'll use the date of the git hash to version the package
+  # We can't use the git hash because the solver would think they are beta / alpha versions
+  # https://github.com/conda-forge/sam-2-feedstock/blob/main/recipe/meta.yaml#L4
+  git_hash_date: "20251211"
+  git_hash: "b26a5f330e05d321afb39d01d3d4881f258f65ff"
+  version: 0.1.0.${{ git_hash_date }}
   python_min: "3.10"
 
 
@@ -13,14 +18,8 @@ package:
 
 source:
   url: https://github.com/facebookresearch/sam3/archive/${{ git_hash }}.tar.gz
-  sha256: b50d5f85bc57f13ef8c1b7fe485688bc0f76f58d18078ce9b505acb3bcfa408b
+  sha256: 3ca3b1df87415961ac42167ad71edccd0ab4f920df1246454d5e6f67170ebd25
   patches:
-    # https://github.com/facebookresearch/sam3/pull/167
-    - 167-update_setuptools_to_find_all_subpackages.patch
-    # https://github.com/facebookresearch/sam3/pull/282
-    - 282-fix_missing_bpe_vocabulary_asset.patch
-    # https://github.com/facebookresearch/sam3/pull/196
-    # - 196-lazy_import_decord.patch
     # Decord is simply unmaintained and the codepath doesn't really use
     # that much reuse of a single video instance
     # I (hmaarrfk) rewrote it in pyav
@@ -35,13 +34,9 @@ source:
     - loosen_dependencies.patch
 
 build:
-  number: 1
+  number: 0
   noarch: python
-  # Copy BPE vocab asset into sam3 package before pip install
-  # since assets/ is at repo root but code expects it inside the package
   script:
-    - mkdir -p sam3/assets
-    - cp assets/bpe_simple_vocab_16e6.txt.gz sam3/assets/
     - python -m pip install . -vv
 
 requirements:
