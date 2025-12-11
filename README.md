@@ -153,5 +153,4 @@ Feedstock Maintainers
 
 * [@claydugo](https://github.com/claydugo/)
 * [@giswqs](https://github.com/giswqs/)
-* [@hmaarrfk](https://github.com/hmaarrfk/)
 
