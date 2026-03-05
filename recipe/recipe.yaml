@@ -38,7 +38,7 @@ source:
     - fix_hardcoded_cuda_device.patch
 
 build:
-  number: 2
+  number: 1
   noarch: python
   script:
     - python -m pip install . -vv
