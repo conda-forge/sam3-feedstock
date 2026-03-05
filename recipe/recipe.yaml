@@ -32,6 +32,8 @@ source:
     - 0001-Avoid-importing-triton-since-it-doesn-t-seem-used.patch
     # numpy and ftfy are pinned too hard in sam3
     - loosen_dependencies.patch
+    # Fix hardcoded device="cuda" that prevents loading on CPU/macOS
+    - fix_hardcoded_cuda_device.patch
 
 build:
   number: 0
