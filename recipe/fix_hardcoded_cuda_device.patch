@@ -41,7 +41,7 @@ index a6a1266..abf5f27 100644
                  # further clone and detach it in the cache (just to be safe)
                  self.cache[size] = self.cache[size].clone().detach()
 diff --git a/sam3/model_builder.py b/sam3/model_builder.py
-index 7dd1a79..38a35e7 100644
+index 7dd1a79..728814c 100644
 --- a/sam3/model_builder.py
 +++ b/sam3/model_builder.py
 @@ -58,7 +58,7 @@ def _setup_tf32() -> None:
@@ -129,7 +129,7 @@ index 7dd1a79..38a35e7 100644
  
      # Create dot product scoring
      dot_prod_scoring = _create_dot_product_scoring()
-@@ -682,7 +690,7 @@ def build_sam3_video_model(
+@@ -682,10 +690,10 @@ def build_sam3_video_model(
      tracker = build_tracker(apply_temporal_disambiguation=apply_temporal_disambiguation)
  
      # Build Detector components
@@ -137,4 +137,8 @@ index 7dd1a79..38a35e7 100644
 +    visual_neck = _create_vision_backbone(device=device)
      text_encoder = _create_text_encoder(bpe_path)
      backbone = SAM3VLBackbone(scalp=1, visual=visual_neck, text=text_encoder)
-     transformer = _create_sam3_transformer(has_presence_token=has_presence_token)
+-    transformer = _create_sam3_transformer(has_presence_token=has_presence_token)
++    transformer = _create_sam3_transformer(has_presence_token=has_presence_token, device=device)
+     segmentation_head: UniversalSegmentationHead = _create_segmentation_head()
+     input_geometry_encoder = _create_geometry_encoder()
+ 

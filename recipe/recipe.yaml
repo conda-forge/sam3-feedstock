@@ -32,11 +32,13 @@ source:
     - 0001-Avoid-importing-triton-since-it-doesn-t-seem-used.patch
     # numpy and ftfy are pinned too hard in sam3
     - loosen_dependencies.patch
+    # Replace deprecated pkg_resources with importlib.resources (removed in setuptools>=71)
+    - fix_pkg_resources.patch
     # Fix hardcoded device="cuda" that prevents loading on CPU/macOS
     - fix_hardcoded_cuda_device.patch
 
 build:
-  number: 0
+  number: 2
   noarch: python
   script:
     - python -m pip install . -vv
