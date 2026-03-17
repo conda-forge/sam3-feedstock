@@ -2,7 +2,17 @@ diff --git a/sam3/model/decoder.py b/sam3/model/decoder.py
 index 7a204be..a103c71 100644
 --- a/sam3/model/decoder.py
 +++ b/sam3/model/decoder.py
-@@ -214,6 +214,7 @@ class TransformerDecoder(nn.Module):
+@@ -68,7 +68,8 @@ class TransformerDecoderLayer(nn.Module):
+         return tensor if pos is None else tensor + pos
+
+     def forward_ffn(self, tgt):
+-        with torch.amp.autocast(device_type="cuda", enabled=False):
++        device_type = tgt.device.type if tgt.device.type != "mps" else "cpu"
++        with torch.amp.autocast(device_type=device_type, enabled=False):
+             tgt2 = self.linear2(self.dropout3(self.activation(self.linear1(tgt))))
+         tgt = tgt + self.dropout4(tgt2)
+         tgt = self.norm3(tgt)
+@@ -214,6 +215,7 @@ class TransformerDecoder(nn.Module):
          separate_norm_instance: bool = False,
          resolution: Optional[int] = None,
          stride: Optional[int] = None,
