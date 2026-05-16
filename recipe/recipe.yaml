@@ -6,8 +6,8 @@ context:
   # so we'll use the date of the git hash to version the package
   # We can't use the git hash because the solver would think they are beta / alpha versions
   # https://github.com/conda-forge/sam-2-feedstock/blob/main/recipe/meta.yaml#L4
-  git_hash_date: "20251211"
-  git_hash: "b26a5f330e05d321afb39d01d3d4881f258f65ff"
+  git_hash_date: "20260515"
+  git_hash: "32f5f81ab9eef0ef3bd33be4d2af31e350ae64ef"
   version: 0.1.0.${{ git_hash_date }}
   python_min: "3.10"
 
@@ -18,7 +18,7 @@ package:
 
 source:
   url: https://github.com/facebookresearch/sam3/archive/${{ git_hash }}.tar.gz
-  sha256: 3ca3b1df87415961ac42167ad71edccd0ab4f920df1246454d5e6f67170ebd25
+  sha256: 086b5467e2fd6c00ae72e43888499db99b74f354da63100cf736014b137ee041
   patches:
     # Decord is simply unmaintained and the codepath doesn't really use
     # that much reuse of a single video instance
@@ -38,7 +38,7 @@ source:
     - fix_hardcoded_cuda_device.patch
 
 build:
-  number: 2
+  number: 0
   noarch: python
   script:
     - python -m pip install . -vv

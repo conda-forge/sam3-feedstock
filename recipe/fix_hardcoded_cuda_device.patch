@@ -1,10 +1,10 @@
 diff --git a/sam3/model/decoder.py b/sam3/model/decoder.py
-index 7a204be..a103c71 100644
+index b90e55f..a29bb91 100644
 --- a/sam3/model/decoder.py
 +++ b/sam3/model/decoder.py
-@@ -68,7 +68,8 @@ class TransformerDecoderLayer(nn.Module):
+@@ -73,7 +73,8 @@ class TransformerDecoderLayer(nn.Module):
          return tensor if pos is None else tensor + pos
-
+ 
      def forward_ffn(self, tgt):
 -        with torch.amp.autocast(device_type="cuda", enabled=False):
 +        device_type = tgt.device.type if tgt.device.type != "mps" else "cpu"
@@ -12,7 +12,7 @@ index 7a204be..a103c71 100644
              tgt2 = self.linear2(self.dropout3(self.activation(self.linear1(tgt))))
          tgt = tgt + self.dropout4(tgt2)
          tgt = self.norm3(tgt)
-@@ -214,6 +215,7 @@ class TransformerDecoder(nn.Module):
+@@ -219,6 +220,7 @@ class TransformerDecoder(nn.Module):
          separate_norm_instance: bool = False,
          resolution: Optional[int] = None,
          stride: Optional[int] = None,
@@ -20,7 +20,7 @@ index 7a204be..a103c71 100644
      ):
          super().__init__()
          self.d_model = d_model
-@@ -275,7 +276,7 @@ class TransformerDecoder(nn.Module):
+@@ -280,7 +282,7 @@ class TransformerDecoder(nn.Module):
              if resolution is not None and stride is not None:
                  feat_size = resolution // stride
                  coords_h, coords_w = self._get_coords(
@@ -30,7 +30,7 @@ index 7a204be..a103c71 100644
                  self.compilable_cord_cache = (coords_h, coords_w)
                  self.compilable_stored_size = (feat_size, feat_size)
 diff --git a/sam3/model/position_encoding.py b/sam3/model/position_encoding.py
-index a6a1266..abf5f27 100644
+index f38c62b..25050be 100644
 --- a/sam3/model/position_encoding.py
 +++ b/sam3/model/position_encoding.py
 @@ -22,6 +22,7 @@ class PositionEmbeddingSine(nn.Module):
@@ -41,7 +41,7 @@ index a6a1266..abf5f27 100644
      ):
          super().__init__()
          assert num_pos_feats % 2 == 0, "Expecting even model width"
-@@ -46,7 +47,7 @@ class PositionEmbeddingSine(nn.Module):
+@@ -52,7 +53,7 @@ class PositionEmbeddingSine(nn.Module):
                  (precompute_resolution // 32, precompute_resolution // 32),
              ]
              for size in precompute_sizes:
@@ -51,10 +51,10 @@ index a6a1266..abf5f27 100644
                  # further clone and detach it in the cache (just to be safe)
                  self.cache[size] = self.cache[size].clone().detach()
 diff --git a/sam3/model_builder.py b/sam3/model_builder.py
-index 7dd1a79..728814c 100644
+index 315fffe..32e036c 100644
 --- a/sam3/model_builder.py
 +++ b/sam3/model_builder.py
-@@ -58,7 +58,7 @@ def _setup_tf32() -> None:
+@@ -64,7 +64,7 @@ def _setup_tf32() -> None:
  _setup_tf32()
  
  
@@ -63,7 +63,7 @@ index 7dd1a79..728814c 100644
      """Create position encoding for visual backbone."""
      return PositionEmbeddingSine(
          num_pos_feats=256,
-@@ -66,6 +66,7 @@ def _create_position_encoding(precompute_resolution=None):
+@@ -72,6 +72,7 @@ def _create_position_encoding(precompute_resolution=None):
          scale=None,
          temperature=10000,
          precompute_resolution=precompute_resolution,
@@ -71,16 +71,16 @@ index 7dd1a79..728814c 100644
      )
  
  
-@@ -153,7 +154,7 @@ def _create_transformer_encoder() -> TransformerEncoderFusion:
+@@ -163,7 +164,7 @@ def _create_transformer_encoder(use_fa3=False) -> TransformerEncoderFusion:
      return encoder
  
  
--def _create_transformer_decoder() -> TransformerDecoder:
-+def _create_transformer_decoder(device="cpu") -> TransformerDecoder:
+-def _create_transformer_decoder(use_fa3=False) -> TransformerDecoder:
++def _create_transformer_decoder(use_fa3=False, device="cpu") -> TransformerDecoder:
      """Create transformer decoder with its layer."""
      decoder_layer = TransformerDecoderLayer(
          activation="relu",
-@@ -186,6 +187,7 @@ def _create_transformer_decoder() -> TransformerDecoder:
+@@ -197,6 +198,7 @@ def _create_transformer_decoder(use_fa3=False) -> TransformerDecoder:
          stride=14,
          use_act_checkpoint=True,
          presence_token=True,
@@ -88,7 +88,7 @@ index 7dd1a79..728814c 100644
      )
      return decoder
  
-@@ -499,11 +501,13 @@ def _create_text_encoder(bpe_path: str) -> VETextEncoder:
+@@ -511,11 +513,13 @@ def _create_text_encoder(bpe_path: str) -> VETextEncoder:
  
  
  def _create_vision_backbone(
@@ -104,22 +104,23 @@ index 7dd1a79..728814c 100644
      # ViT backbone
      vit_backbone: ViT = _create_vit_backbone(compile_mode=compile_mode)
      vit_neck: Sam3DualViTDetNeck = _create_vit_neck(
-@@ -515,10 +519,12 @@ def _create_vision_backbone(
-     return vit_neck
+@@ -528,11 +532,13 @@ def _create_vision_backbone(
  
  
--def _create_sam3_transformer(has_presence_token: bool = True) -> TransformerWrapper:
-+def _create_sam3_transformer(
-+    has_presence_token: bool = True, device: str = "cpu"
-+) -> TransformerWrapper:
+ def _create_sam3_transformer(
+-    has_presence_token: bool = True, use_fa3: bool = False
++    has_presence_token: bool = True, use_fa3: bool = False, device: str = "cpu"
+ ) -> TransformerWrapper:
      """Create SAM3 transformer encoder and decoder."""
-     encoder: TransformerEncoderFusion = _create_transformer_encoder()
--    decoder: TransformerDecoder = _create_transformer_decoder()
-+    decoder: TransformerDecoder = _create_transformer_decoder(device=device)
+     encoder: TransformerEncoderFusion = _create_transformer_encoder(use_fa3=use_fa3)
+-    decoder: TransformerDecoder = _create_transformer_decoder(use_fa3=use_fa3)
++    decoder: TransformerDecoder = _create_transformer_decoder(
++        use_fa3=use_fa3, device=device
++    )
  
      return TransformerWrapper(encoder=encoder, decoder=decoder, d_model=256)
  
-@@ -591,7 +597,9 @@ def build_sam3_image_model(
+@@ -605,7 +611,9 @@ def build_sam3_image_model(
      # Create visual components
      compile_mode = "default" if compile else None
      vision_encoder = _create_vision_backbone(
@@ -130,7 +131,7 @@ index 7dd1a79..728814c 100644
      )
  
      # Create text components
-@@ -601,7 +609,7 @@ def build_sam3_image_model(
+@@ -615,7 +623,7 @@ def build_sam3_image_model(
      backbone = _create_vl_backbone(vision_encoder, text_encoder)
  
      # Create transformer components
@@ -139,7 +140,7 @@ index 7dd1a79..728814c 100644
  
      # Create dot product scoring
      dot_prod_scoring = _create_dot_product_scoring()
-@@ -682,10 +690,10 @@ def build_sam3_video_model(
+@@ -706,10 +714,10 @@ def build_sam3_video_model(
      tracker = build_tracker(apply_temporal_disambiguation=apply_temporal_disambiguation)
  
      # Build Detector components

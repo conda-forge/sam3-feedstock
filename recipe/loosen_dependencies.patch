@@ -1,12 +1,12 @@
 diff --git a/pyproject.toml b/pyproject.toml
-index e4998de..2e69775 100644
+index 9df1b67..8e24c16 100644
 --- a/pyproject.toml
 +++ b/pyproject.toml
 @@ -26,9 +26,9 @@ classifiers = [
  ]
  dependencies = [
      "timm>=1.0.17",
--    "numpy==1.26",
+-    "numpy>=1.26,<2",
 +    "numpy>=1.26",
      "tqdm",
 -    "ftfy==6.1.1",
