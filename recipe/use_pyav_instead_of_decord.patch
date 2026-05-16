@@ -1,20 +1,50 @@
+diff --git a/sam3/model/utils/sam2_utils.py b/sam3/model/utils/sam2_utils.py
+index e824fe1..720c9fa 100644
+--- a/sam3/model/utils/sam2_utils.py
++++ b/sam3/model/utils/sam2_utils.py
+@@ -212,17 +212,25 @@ def load_video_frames_from_video_file(
+     compute_device=torch.device("cuda"),
+ ):
+     """Load the video frames from a video file."""
+-    import decord
++    import av
+ 
+     img_mean = torch.tensor(img_mean, dtype=torch.float32)[:, None, None]
+     img_std = torch.tensor(img_std, dtype=torch.float32)[:, None, None]
+-    # Get the original video height and width
+-    decord.bridge.set_bridge("torch")
+-    video_height, video_width, _ = decord.VideoReader(video_path).next().shape
+-    # Iterate over all frames in the video
++    # Iterate over all frames in the video, resizing them to image_size
+     images = []
+-    for frame in decord.VideoReader(video_path, width=image_size, height=image_size):
+-        images.append(frame.permute(2, 0, 1))
++    container = av.open(video_path)
++    try:
++        stream = container.streams.video[0]
++        # Get the original video height and width
++        video_height = stream.codec_context.height
++        video_width = stream.codec_context.width
++        for frame in container.decode(stream):
++            resized = frame.reformat(
++                width=image_size, height=image_size, format="rgb24"
++            )
++            images.append(torch.from_numpy(resized.to_ndarray()).permute(2, 0, 1))
++    finally:
++        container.close()
+ 
+     images = torch.stack(images, dim=0).float() / 255.0
+     if not offload_video_to_cpu:
 diff --git a/sam3/train/data/sam3_image_dataset.py b/sam3/train/data/sam3_image_dataset.py
-index 97efb1d..26f0654 100644
+index 28e7425..dd1168e 100644
 --- a/sam3/train/data/sam3_image_dataset.py
 +++ b/sam3/train/data/sam3_image_dataset.py
-@@ -15,7 +15,7 @@ from typing import Any, Callable, Dict, List, Optional, Set, Tuple, Union
- import torch
- import torch.utils.data
- import torchvision
--from decord import cpu, VideoReader
-+import av
- from iopath.common.file_io import g_pathmgr
- 
- from PIL import Image as PILImage
-@@ -202,17 +202,20 @@ class CustomCocoDetectionAPI(VisionDataset):
+@@ -201,19 +201,31 @@ class CustomCocoDetectionAPI(VisionDataset):
              try:
                  if ".mp4" in path and path[-4:] == ".mp4":
                      # Going to load a video frame
+-                    from decord import cpu, VideoReader
+-
 -                    video_path, frame = path.split("@")
 -                    video = VideoReader(video_path, ctx=cpu(0))
 -                    # Convert to PIL image
@@ -24,23 +54,32 @@ index 97efb1d..26f0654 100644
 -                            torchvision.transforms.ToPILImage()(
 -                                video[int(frame)].asnumpy()
 -                            ),
--                        )
--                    )
++                    import av
++
 +                    video_path, frame_idx = path.split("@")
 +                    frame_idx = int(frame_idx)
 +                    container = av.open(video_path)
 +                    try:
 +                        stream = container.streams.video[0]
-+                        fps = stream.average_rate.numerator / stream.average_rate.denominator if stream.average_rate.denominator > 0 else 30.0
++                        fps = (
++                            stream.average_rate.numerator
++                            / stream.average_rate.denominator
++                            if stream.average_rate.denominator > 0
++                            else 30.0
+                         )
+-                    )
 +                        seek_time = frame_idx / fps
-+                        timestamp = int(seek_time * stream.time_base.denominator / stream.time_base.numerator)
++                        timestamp = int(
++                            seek_time
++                            * stream.time_base.denominator
++                            / stream.time_base.numerator
++                        )
 +                        container.seek(timestamp, stream=stream, any_frame=False)
 +                        frame = next(container.decode(video=0))
-+                        frame_rgb = frame.to_ndarray(format='rgb24')
++                        frame_rgb = frame.to_ndarray(format="rgb24")
 +                        all_images.append((img_id, PILImage.fromarray(frame_rgb)))
 +                    finally:
 +                        container.close()
                  else:
                      with g_pathmgr.open(path, "rb") as fopen:
                          all_images.append((img_id, PILImage.open(fopen).convert("RGB")))
-

@@ -1,26 +1,25 @@
-From 16e2e16ff4b3bed38f71a8010b42e113d0e42e60 Mon Sep 17 00:00:00 2001
+From 88c556d395342055e82ea7e8f7fa8baa62741ee2 Mon Sep 17 00:00:00 2001
 From: Mark Harfouche <mark.harfouche@gmail.com>
 Date: Sat, 22 Nov 2025 16:00:21 -0500
 Subject: [PATCH] Avoid importing triton since it doesn't seem used
 
 ---
- sam3/model/sam3_tracker_utils.py | 5 +++--
- 1 file changed, 3 insertions(+), 2 deletions(-)
+ sam3/model/sam3_tracker_utils.py | 4 +++-
+ 1 file changed, 3 insertions(+), 1 deletion(-)
 
 diff --git a/sam3/model/sam3_tracker_utils.py b/sam3/model/sam3_tracker_utils.py
-index 7afc70a..94d7899 100644
+index 74e9e12..5120d20 100644
 --- a/sam3/model/sam3_tracker_utils.py
 +++ b/sam3/model/sam3_tracker_utils.py
-@@ -5,8 +5,6 @@ import torch
+@@ -6,7 +6,6 @@ import numpy as np
+ import torch
  import torch.nn.functional as F
  from numpy.typing import NDArray
- 
 -from sam3.model.edt import edt_triton
--
+ 
  
  def sample_box_points(
-     masks: torch.Tensor,
-@@ -148,6 +146,9 @@ def sample_one_point_from_error_center(gt_masks, pred_masks, padding=True):
+@@ -149,6 +148,9 @@ def sample_one_point_from_error_center(gt_masks, pred_masks, padding=True):
      - points: [B, 1, 2], dtype=torch.float, contains (x, y) coordinates of each sampled point
      - labels: [B, 1], dtype=torch.int32, where 1 means positive clicks and 0 means negative clicks
      """
