@@ -36,9 +36,12 @@ source:
     - fix_pkg_resources.patch
     # Fix hardcoded device="cuda" that prevents loading on CPU/macOS
     - fix_hardcoded_cuda_device.patch
+    # Use the non-deprecated `timm.layers` import path, consistent with the
+    # try/except guard the other sam3 modules already use
+    - fix_timm_models_layers_import.patch
 
 build:
-  number: 0
+  number: 1
   noarch: python
   script:
     - python -m pip install . -vv
