@@ -39,9 +39,22 @@ source:
     # Use the non-deprecated `timm.layers` import path, consistent with the
     # try/except guard the other sam3 modules already use
     - fix_timm_models_layers_import.patch
+    # Make the image and video tracker paths run on CPU / Apple MPS:
+    #  - perflib.addmm_act unconditionally cast to bfloat16, which only stays
+    #    dtype-consistent under the CUDA bf16 autocast (raises on CPU, aborts
+    #    on MPS); fall back to a plain linear + activation off CUDA
+    #  - .cuda() / torch.device("cuda") / pin_memory() hardcodes in the video
+    #    tracker fail when torch has no CUDA; use the compute device instead
+    #  - bfloat16 maskmem storage is a CUDA-only memory optimization
+    #  - RoPE freqs_cis cache and complex repeat() were CUDA/MPS-incompatible
+    # Mirrors the upstream fixes proposed in (still-open) PRs:
+    #   https://github.com/facebookresearch/sam3/pull/510 (fused.py + tracker)
+    #   https://github.com/facebookresearch/sam3/pull/264 (rope.py + transformer)
+    # Drop this patch once either lands upstream and the git_hash is bumped.
+    - fix_mps_compatibility.patch
 
 build:
-  number: 1
+  number: 2
   noarch: python
   script:
     - python -m pip install . -vv
