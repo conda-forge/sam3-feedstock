@@ -52,9 +52,12 @@ source:
     #   https://github.com/facebookresearch/sam3/pull/264 (rope.py + transformer)
     # Drop this patch once either lands upstream and the git_hash is bumped.
     - fix_mps_compatibility.patch
+    # Remove the 3-channel assertion in set_image / set_image_batch so
+    # downstream callers can use 1-channel input.
+    - remove_channel_assertion.patch
 
 build:
-  number: 2
+  number: 3
   noarch: python
   script:
     - python -m pip install . -vv
