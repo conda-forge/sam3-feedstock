@@ -57,7 +57,7 @@ source:
     - remove_channel_assertion.patch
 
 build:
-  number: 3
+  number: 4
   noarch: python
   script:
     - python -m pip install . -vv
