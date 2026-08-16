@@ -9,7 +9,6 @@ context:
   git_hash_date: "20260515"
   git_hash: "32f5f81ab9eef0ef3bd33be4d2af31e350ae64ef"
   version: 0.1.0.${{ git_hash_date }}
-  python_min: "3.10"
 
 
 package:
@@ -97,7 +96,9 @@ tests:
       imports:
         - sam3
       pip_check: true
-      python_version: ${{ python_min }}.*
+      python_version:
+        - ${{ python_min }}.*
+        - "*"
   - script:
       # Verify the BPE vocabulary asset is included in the package
       - test -f $PREFIX/lib/python*/site-packages/sam3/assets/bpe_simple_vocab_16e6.txt.gz
