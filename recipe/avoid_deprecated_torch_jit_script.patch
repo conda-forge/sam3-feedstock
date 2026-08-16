@@ -1,0 +1,51 @@
+diff --git a/sam3/model/box_ops.py b/sam3/model/box_ops.py
+index 59f52e0..339187e 100644
+--- a/sam3/model/box_ops.py
++++ b/sam3/model/box_ops.py
+@@ -144,7 +144,6 @@ def generalized_box_iou(boxes1, boxes2):
+     return iou - (area - union) / area
+ 
+ 
+-@torch.jit.script
+ def fast_diag_generalized_box_iou(boxes1, boxes2):
+     assert len(boxes1) == len(boxes2)
+     box1_xy = boxes1[:, 2:]
+@@ -171,7 +170,6 @@ def fast_diag_generalized_box_iou(boxes1, boxes2):
+     return iou - (tot_area - union) / tot_area
+ 
+ 
+-@torch.jit.script
+ def fast_diag_box_iou(boxes1, boxes2):
+     assert len(boxes1) == len(boxes2)
+     box1_xy = boxes1[:, 2:]
+diff --git a/sam3/model/utils/sam1_utils.py b/sam3/model/utils/sam1_utils.py
+index 1ee131e..d6de5bc 100644
+--- a/sam3/model/utils/sam1_utils.py
++++ b/sam3/model/utils/sam1_utils.py
+@@ -30,11 +30,9 @@ class SAM2Transforms(nn.Module):
+         self.mean = [0.5, 0.5, 0.5]
+         self.std = [0.5, 0.5, 0.5]
+         self.to_tensor = ToTensor()
+-        self.transforms = torch.jit.script(
+-            nn.Sequential(
+-                Resize((self.resolution, self.resolution)),
+-                Normalize(self.mean, self.std),
+-            )
++        self.transforms = nn.Sequential(
++            Resize((self.resolution, self.resolution)),
++            Normalize(self.mean, self.std),
+         )
+ 
+     def __call__(self, x):
+diff --git a/sam3/train/loss/loss_fns.py b/sam3/train/loss/loss_fns.py
+index 8fa1774..e22db00 100644
+--- a/sam3/train/loss/loss_fns.py
++++ b/sam3/train/loss/loss_fns.py
+@@ -195,7 +195,6 @@ def iou_loss(
+     return loss.sum() / num_boxes
+ 
+ 
+-@torch.jit.script
+ def _contrastive_align(logits, positive_map):
+     positive_logits = -logits.masked_fill(~positive_map, 0)
+     negative_logits = logits  # .masked_fill(positive_map, -1000000)

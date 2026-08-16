@@ -55,9 +55,15 @@ source:
     # Remove the 3-channel assertion in set_image / set_image_batch so
     # downstream callers can use 1-channel input.
     - remove_channel_assertion.patch
+    # torch.jit.script is deprecated (torch >=2.9 emits a DeprecationWarning on
+    # every call) and the scripted callables here are plain eager helpers:
+    # the two box IoU functions, the contrastive align loss, and the
+    # Resize + Normalize Sequential rebuilt on every image predictor.
+    # Scripting that Sequential alone emits ~29 warnings per predictor.
+    - avoid_deprecated_torch_jit_script.patch
 
 build:
-  number: 4
+  number: 5
   noarch: python
   script:
     - python -m pip install . -vv
