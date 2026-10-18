@@ -6,8 +6,8 @@ context:
   # so we'll use the date of the git hash to version the package
   # We can't use the git hash because the solver would think they are beta / alpha versions
   # https://github.com/conda-forge/sam-2-feedstock/blob/main/recipe/meta.yaml#L4
-  git_hash_date: "20260515"
-  git_hash: "32f5f81ab9eef0ef3bd33be4d2af31e350ae64ef"
+  git_hash_date: "20261014"
+  git_hash: "7f473cfd983d5eb43040ff608f66bff0d7bdcb53"
   version: 0.1.0.${{ git_hash_date }}
 
 
@@ -17,7 +17,7 @@ package:
 
 source:
   url: https://github.com/facebookresearch/sam3/archive/${{ git_hash }}.tar.gz
-  sha256: 086b5467e2fd6c00ae72e43888499db99b74f354da63100cf736014b137ee041
+  sha256: ab79828ce10d3edd5507d87019a5b081d596d265f44d1482717e451d7f9a76d2
   patches:
     # Decord is simply unmaintained and the codepath doesn't really use
     # that much reuse of a single video instance
@@ -62,7 +62,7 @@ source:
     - avoid_deprecated_torch_jit_script.patch
 
 build:
-  number: 5
+  number: 0
   noarch: python
   script:
     - python -m pip install . -vv

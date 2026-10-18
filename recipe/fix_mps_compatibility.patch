@@ -1,8 +1,8 @@
 diff --git a/sam3/model/geometry_encoders.py b/sam3/model/geometry_encoders.py
-index d60ee54..6ebdc16 100644
+index f86cc97..9b2564b 100644
 --- a/sam3/model/geometry_encoders.py
 +++ b/sam3/model/geometry_encoders.py
-@@ -645,7 +645,12 @@ class SequenceGeometryEncoder(nn.Module):
+@@ -648,7 +648,12 @@ class SequenceGeometryEncoder(nn.Module):
              # We need to denormalize, and convert to [x, y, x, y]
              boxes_xyxy = box_cxcywh_to_xyxy(boxes)
              scale = torch.tensor([W, H, W, H], dtype=boxes_xyxy.dtype)
@@ -17,10 +17,10 @@ index d60ee54..6ebdc16 100644
              boxes_xyxy = boxes_xyxy * scale
              sampled = torchvision.ops.roi_align(
 diff --git a/sam3/model/sam3_multiplex_base.py b/sam3/model/sam3_multiplex_base.py
-index e4df5d3..dd45ecc 100644
+index 5b07e73..de38c50 100644
 --- a/sam3/model/sam3_multiplex_base.py
 +++ b/sam3/model/sam3_multiplex_base.py
-@@ -2236,9 +2236,9 @@ class Sam3MultiplexBase(Sam3VideoBase):
+@@ -2301,9 +2301,9 @@ class Sam3MultiplexBase(Sam3VideoBase):
          # Suppress if: keep_alive <= 0 AND not hotstart-only mode AND not removed
          suppress_by_unmatch = (
              (trk_keep_alive <= 0)
@@ -33,15 +33,19 @@ index e4df5d3..dd45ecc 100644
              & ~removed_mask
              & ~remove_by_unmatch
          )
-@@ -2500,11 +2500,13 @@ class Sam3MultiplexBase(Sam3VideoBase):
+@@ -2569,13 +2569,15 @@ class Sam3MultiplexBase(Sam3VideoBase):
                  continue
              # Get the local high-res masks and object score logits for this inference state
              if self.is_multiplex and self.tracker.is_multiplex_dynamic:
 -                local_idx = (
+-                    # pyre-fixme[61]: `object_idx_assignment` is undefined, or not
+-                    #  always defined.
 -                    torch.tensor(object_idx_assignment[state_i])
 -                    .pin_memory()
 -                    .to(device=high_res_masks.device, non_blocking=True)
 -                )
++                # pyre-fixme[61]: `object_idx_assignment` is undefined, or not
++                #  always defined.
 +                local_idx = torch.tensor(object_idx_assignment[state_i])
 +                if high_res_masks.device.type == "cuda":
 +                    local_idx = local_idx.pin_memory().to(
@@ -53,7 +57,7 @@ index e4df5d3..dd45ecc 100644
                  local_object_score_logits = object_score_logits[local_idx]
              else:
 diff --git a/sam3/model/sam3_multiplex_tracking.py b/sam3/model/sam3_multiplex_tracking.py
-index 35183a5..f36b235 100644
+index 1b6ce7d..e25826b 100644
 --- a/sam3/model/sam3_multiplex_tracking.py
 +++ b/sam3/model/sam3_multiplex_tracking.py
 @@ -715,9 +715,12 @@ class Sam3MultiplexTracking(Sam3MultiplexBase):
@@ -180,7 +184,7 @@ index 43b068b..199f1f6 100644
          # "maskmem_pos_enc" is the same across frames, so we only need to store one copy of it
          maskmem_pos_enc = self._get_maskmem_pos_enc(
 diff --git a/sam3/model/sam3_video_inference.py b/sam3/model/sam3_video_inference.py
-index 375d9ec..fc5ca78 100644
+index d8c69c6..97129c6 100644
 --- a/sam3/model/sam3_video_inference.py
 +++ b/sam3/model/sam3_video_inference.py
 @@ -480,9 +480,12 @@ class Sam3VideoInference(Sam3VideoBase):
@@ -200,10 +204,10 @@ index 375d9ec..fc5ca78 100644
              out_obj_ids = torch.index_select(out_obj_ids, 0, keep_idx)
              out_probs = torch.index_select(out_probs, 0, keep_idx)
 diff --git a/sam3/model/video_tracking_multiplex.py b/sam3/model/video_tracking_multiplex.py
-index 02bf537..85e280a 100644
+index 91764e9..f2adf31 100644
 --- a/sam3/model/video_tracking_multiplex.py
 +++ b/sam3/model/video_tracking_multiplex.py
-@@ -538,10 +538,12 @@ class VideoTrackingMultiplex(nn.Module):
+@@ -543,10 +543,12 @@ class VideoTrackingMultiplex(nn.Module):
              return torch.zeros(len(rel_pos_list), self.mem_dim, device=device)
  
          t_diff_max = max_abs_pos - 1 if max_abs_pos is not None else 1
@@ -266,7 +270,7 @@ index 6800cca..e1bbb9f 100644
 +        return torch.nn.functional.gelu(y)
 +    return torch.nn.functional.relu(y)
 diff --git a/sam3/sam/rope.py b/sam3/sam/rope.py
-index 6099273..a003aa4 100644
+index 06ca8f3..ed59c18 100644
 --- a/sam3/sam/rope.py
 +++ b/sam3/sam/rope.py
 @@ -75,7 +75,16 @@ def apply_rotary_enc(
@@ -288,10 +292,10 @@ index 6099273..a003aa4 100644
      return xq_out.type_as(xq).to(xq.device), xk_out.type_as(xk).to(xk.device)
  
 diff --git a/sam3/sam/transformer.py b/sam3/sam/transformer.py
-index 1ff2380..ec6055d 100644
+index 9babcee..548848f 100644
 --- a/sam3/sam/transformer.py
 +++ b/sam3/sam/transformer.py
-@@ -307,7 +307,14 @@ class RoPEAttention(Attention):
+@@ -308,7 +308,14 @@ class RoPEAttention(Attention):
  
          # Apply rotary position encoding
          w = h = math.sqrt(q.shape[-2])
